@@ -17,7 +17,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v22
         with:
           summarize: false
-      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
       - run: nix flake check
 
   docker:
@@ -28,7 +28,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v22
         with:
           summarize: false
-      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
 
       - name: Build docker image
         run: nix build .#docker
@@ -83,7 +83,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v22
         with:
           summarize: false
-      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - uses: DeterminateSystems/magic-nix-cache-action@v14
 
       - name: Build scip-rust
         run: nix build .#scip-rust
