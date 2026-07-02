@@ -71,7 +71,7 @@ jobs:
             expect_file: serde/src/lib.rs
           - name: ruff
             repo: astral-sh/ruff
-            ref: 0.15.13
+            ref: 0.15.20
             expect_file: crates/ruff/src/main.rs
 
     runs-on: ubuntu-latest
