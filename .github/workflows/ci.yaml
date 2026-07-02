@@ -63,7 +63,7 @@ jobs:
             expect_file: crates/core/main.rs
           - name: hyper
             repo: hyperium/hyper
-            ref: v1.9.0
+            ref: v1.10.1
             expect_file: src/lib.rs
           - name: serde
             repo: serde-rs/serde
