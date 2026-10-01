@@ -67,7 +67,7 @@ jobs:
             expect_file: src/lib.rs
           - name: serde
             repo: serde-rs/serde
-            ref: v1.0.228
+            ref: v1.0.229
             expect_file: serde/src/lib.rs
           - name: ruff
             repo: astral-sh/ruff
