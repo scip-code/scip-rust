@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: BurntSushi/ripgrep
-          ref: 15.1.0
+          ref: 15.2.0
           path: target
 
       - name: Index target via Docker
@@ -59,7 +59,7 @@ jobs:
         include:
           - name: ripgrep
             repo: BurntSushi/ripgrep
-            ref: 15.1.0
+            ref: 15.2.0
             expect_file: crates/core/main.rs
           - name: hyper
             repo: hyperium/hyper
