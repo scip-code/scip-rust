@@ -5,27 +5,32 @@ on:
     tags:
       - v*
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   release-image:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: docker/setup-buildx-action@v4
-      - run: echo "PATCH=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
-      - run: echo "MINOR=${PATCH%.*}" >> $GITHUB_ENV
-      - run: echo "MAJOR=${MINOR%.*}" >> $GITHUB_ENV
-      - name: Login to DockerHub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
-        id: docker_build
         uses: docker/build-push-action@v7
         with:
           push: true
+          platforms: linux/amd64
+          # latest, v0 and v0.0 belong to the Nix-built releases from main.
+          # Auto-indexing consumers track the autoindex tag.
           tags: |
-            sourcegraph/scip-rust:latest
-            sourcegraph/scip-rust:${{ env.PATCH }}
-            sourcegraph/scip-rust:${{ env.MINOR }}
-            sourcegraph/scip-rust:${{ env.MAJOR }}
+            ghcr.io/scip-code/scip-rust:${{ github.ref_name }}
+            ghcr.io/scip-code/scip-rust:autoindex
+          labels: |
+            org.opencontainers.image.source=https://github.com/scip-code/scip-rust
+            org.opencontainers.image.revision=${{ github.sha }}
