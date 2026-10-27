@@ -52,6 +52,26 @@ jobs:
           echo "Index size: $size bytes"
           [ "$size" -ge 102400 ] || { echo "FAIL: index too small"; exit 1; }
 
+      # Callers that run commands through /bin/sh and still pass the `index`
+      # argument accepted by releases up to v0.0.5.
+      - name: Index target via /bin/sh and `scip-rust index`
+        run: |
+          rm target/index.scip
+          docker run --rm --entrypoint /bin/sh -v "$PWD/target:/work" \
+            scip-rust:latest -c 'scip-rust index'
+
+      - name: Check index size
+        run: |
+          size=$(stat --format='%s' target/index.scip)
+          echo "Index size: $size bytes"
+          [ "$size" -ge 102400 ] || { echo "FAIL: index too small"; exit 1; }
+
+      # BusyBox wget and ssl_client do not verify TLS certificates.
+      - name: Check the image has no BusyBox TLS clients
+        run: |
+          docker run --rm --entrypoint /bin/sh scip-rust:latest \
+            -c '! command -v wget && ! command -v ssl_client'
+
   index:
     strategy:
       fail-fast: false

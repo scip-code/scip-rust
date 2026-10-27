@@ -22,6 +22,14 @@ for tool in cargo rust-analyzer rustc; do
     fi
 done
 
+# Drop a leading `index` argument. Releases up to v0.0.5 ignored their
+# arguments, and existing callers (such as auto-indexing jobs) still run
+# `scip-rust index`; without this, rust-analyzer would treat `index` as the
+# project path. To index a directory named `index`, pass `./index`.
+if [ "${1:-}" = "index" ]; then
+    shift
+fi
+
 # Forward any extra args (e.g. `--output PATH`) to rust-analyzer; default
 # to indexing the current directory if no path is given.
 if [ $# -eq 0 ]; then
