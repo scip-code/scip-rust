@@ -24,8 +24,11 @@
           text = builtins.readFile ./scip-rust;
         };
         # Distrust the roots behind the compromised eMudhra intermediate CAs
-        # (https://emudhra.we-have-a-problem.com/). Drop once nixpkgs ships
-        # cacert 3.131.1 or later.
+        # (https://emudhra.we-have-a-problem.com/). The pinned cacert (3.123)
+        # already distrusts Comodo AAA Services root for TLS; it is listed as
+        # defence in depth. cacert 3.131.1 drops emSign ECC Root CA - G3, so
+        # this override fails the build after a nixpkgs bump to it; remove it
+        # then.
         dockerTools = pkgs.dockerTools.override {
           cacert = pkgs.cacert.override {
             blacklist = [
