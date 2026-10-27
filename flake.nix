@@ -23,6 +23,26 @@
           };
           text = builtins.readFile ./scip-rust;
         };
+        # Distrust the roots behind the compromised eMudhra intermediate CAs
+        # (https://emudhra.we-have-a-problem.com/). Drop once nixpkgs ships
+        # cacert 3.131.1 or later.
+        dockerTools = pkgs.dockerTools.override {
+          cacert = pkgs.cacert.override {
+            blacklist = [
+              "Comodo AAA Services root"
+              "emSign ECC Root CA - G3"
+            ];
+          };
+        };
+        # Provides /bin/sh for callers that run commands in the container
+        # through a shell. wget and ssl_client are left out: BusyBox does
+        # not verify TLS certificates.
+        busybox = pkgs.busybox.override {
+          extraConfig = ''
+            CONFIG_WGET n
+            CONFIG_SSL_CLIENT n
+          '';
+        };
       in
       {
         packages = {
@@ -30,12 +50,13 @@
           default = scip-rust;
         }
         // pkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
-          docker = pkgs.dockerTools.buildLayeredImage {
+          docker = dockerTools.buildLayeredImage {
             name = "scip-rust";
             tag = "latest";
             contents = [
               scip-rust
-              pkgs.dockerTools.caCertificates
+              busybox
+              dockerTools.caCertificates
               pkgs.git
             ];
             fakeRootCommands = "mkdir -p /work /tmp";
