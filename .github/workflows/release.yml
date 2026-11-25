@@ -12,6 +12,7 @@ jobs:
   tag:
     runs-on: ubuntu-latest
     permissions:
+      checks: read
       contents: write
     steps:
       - uses: actions/checkout@v7
@@ -24,6 +25,18 @@ jobs:
         run: |
           if ! echo "$NEW_VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "error: version '$NEW_VERSION' does not match semantic versioning (expected X.Y.Z)"
+            exit 1
+          fi
+
+      - name: Check that CI passed on the commit to tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHA="$(git rev-parse HEAD)"
+          CI="$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/check-runs?check_name=ci-pass" \
+            --jq '.check_runs[0].conclusion // "pending"')"
+          if [ "$CI" != "success" ]; then
+            echo "::error::ci-pass is $CI on $SHA; re-run this job once CI passes."
             exit 1
           fi
 

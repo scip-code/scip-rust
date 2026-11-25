@@ -1,0 +1,60 @@
+name: scheduled-release
+
+# Releases the next patch version every 4 weeks on Monday, even without code
+# changes, so the image picks up the nixpkgs updates that Renovate's lock file
+# maintenance merged since the last release.
+on:
+  # Cron can't express "every 4 weeks", so this runs every Monday
+  # and skips weeks that aren't a multiple of 4 after RELEASE_MONDAY.
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+env:
+  RELEASE_MONDAY: "2026-11-23"
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Release from main even when dispatched from another branch.
+          ref: main
+          fetch-depth: 0
+
+      - name: Start release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            # Unlike the clock, the run's creation time stays the same when
+            # the run is re-run on a later day.
+            CREATED="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq .created_at)"
+            DAYS=$(( ($(date -u -d "$CREATED" +%s) - $(date -u -d "$RELEASE_MONDAY" +%s)) / 86400 ))
+            if (( DAYS % 28 != 0 )); then
+              echo "Not a release week ($DAYS days after $RELEASE_MONDAY)"
+              exit 0
+            fi
+            # The image is built from these files alone, so it would be identical.
+            # Compare with the last published release rather than the last tag,
+            # because release.yml pushes the tag before it publishes anything.
+            PUBLISHED="$(gh release view -R "$GITHUB_REPOSITORY" --json tagName --jq .tagName)"
+            if git diff --quiet "$PUBLISHED" HEAD -- flake.nix flake.lock scip-rust; then
+              echo "Nothing in the image changed since $PUBLISHED"
+              exit 0
+            fi
+          fi
+
+          LAST_TAG="$(git tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1)"
+          IFS=. read -r MAJOR MINOR PATCH <<<"${LAST_TAG#v}"
+          VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+          # Workflows can start workflow_dispatch runs with GITHUB_TOKEN.
+          # release.yml checks CI on the commit it tags.
+          gh workflow run release.yml -R "$GITHUB_REPOSITORY" --ref main -f version="$VERSION"
+          echo "Started the release of v$VERSION"

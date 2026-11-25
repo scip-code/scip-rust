@@ -33,8 +33,15 @@ nix run github:scip-code/scip-rust
 ## Cutting releases
 
 From the `main` branch, trigger the [release workflow] via **Actions → release →
-Run workflow**, entering `M.N.P` as the version.
+Run workflow**, entering `M.N.P` as the version. It only releases a commit that
+passed CI.
+
+Every 4 weeks on Monday, the [scheduled release workflow] releases the next patch
+version if the image changed since the last release, for example because
+Renovate's lock file maintenance updated nixpkgs. Running it manually releases
+the next patch version right away.
 
   [`rust-analyzer`]: https://rust-analyzer.github.io/book/installation.html
   [`scip-rust`]: ./scip-rust
   [release workflow]: https://github.com/scip-code/scip-rust/actions/workflows/release.yml
+  [scheduled release workflow]: https://github.com/scip-code/scip-rust/actions/workflows/scheduled-release.yml
