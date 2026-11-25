@@ -20,8 +20,14 @@ jobs:
       - uses: DeterminateSystems/magic-nix-cache-action@v15
       - run: nix flake check
 
+  # Both architectures that release.yml publishes, so that auto-merged
+  # updates can't break the arm64 image unnoticed.
   docker:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
